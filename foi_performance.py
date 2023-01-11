@@ -22,7 +22,7 @@ DELAY = 2.0 # seconds to delay between requests
 
 def uni_stream():
     resp = requests.get(URL)
-    return io.StringIO(resp.text)    
+    return io.StringIO(resp.text)
 
 def all_universities():
     for row in csv.reader(uni_stream()):
