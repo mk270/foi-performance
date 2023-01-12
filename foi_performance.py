@@ -20,22 +20,26 @@ import io
 URL = "https://www.whatdotheyknow.com/body/all-authorities.csv"
 DELAY = 2.0 # seconds to delay between requests
 
-def uni_stream():
+def organisations():
+    """Get the list of all FOIA-subject organisations."""
     resp = requests.get(URL)
     return io.StringIO(resp.text)
 
 def all_universities():
-    for row in csv.reader(uni_stream()):
+    """Obtain the name and ID of anything matching a university."""
+    for row in csv.reader(organisations()):
         name, code = row[0], row[2]
         if "university" in code:
             yield name, code
 
 def stats(args):
+    """Request summaries of FOI performance for each university."""
     for name, code in all_universities():
         url = f"https://www.whatdotheyknow.com/body/{code}.json"
         time.sleep(args.delay)
         resp = requests.get(url).json()
-        yield name, code, resp["info"]
+        summary = resp["info"]
+        yield name, code, summary
 
 FIELDS = [
     'requests_count',
@@ -48,13 +52,17 @@ FIELDS = [
 HEADERS = "Name Total Successful NotHeld Overdue Count Code"
 
 def flatten(args):
-    for name, code, data in stats(args):
-        flattened = [data[k] for k in FIELDS]
+    """Make all the info about a university into a single row/tuple."""
+    for name, code, summary in stats(args):
+        flattened = [summary[k] for k in FIELDS]
         yield tuple([name] + flattened + [code])
 
-def main(args):
+def make_csv(args):
+    headers = tuple(HEADERS.split())
+
     w = csv.writer(sys.stdout)
-    w.writerow(tuple(HEADERS.split()))
+    w.writerow(headers)
+
     for inst_stat in flatten(args):
         w.writerow(inst_stat)
 
@@ -69,7 +77,7 @@ def run():
     if args.debug:
         logging.getLogger().setLevel(20)
 
-    main(args)
+    make_csv(args)
 
 if __name__ == '__main__':
     run()
