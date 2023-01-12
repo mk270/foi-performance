@@ -49,6 +49,7 @@ FIELDS = [
     'requests_visible_classified_count'
 ]
 
+# items 2-6 of this list must correspond to the FIELDS list above
 HEADERS = "Name Total Successful NotHeld Overdue Count Code"
 
 def flatten(args):
